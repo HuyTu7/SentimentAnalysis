@@ -105,120 +105,6 @@ def feature_vecs_NLP(train_pos, train_neg, test_pos, test_neg):
 	# Return the four feature vectors
 	return train_pos_vec, train_neg_vec, test_pos_vec, test_neg_vec
 
-
-
-def feature_vecs_DOC(train_pos, train_neg, test_pos, test_neg):
-	"""
-	Returns the feature vectors for all text in the train and test datasets.
-	"""
-	# Doc2Vec requires LabeledSentence objects as input.
-	# Turn the datasets from lists of words to lists of LabeledSentence objects.
-	# YOUR CODE HERE
-
-	# Initialize model
-	model = Doc2Vec(min_count=1, window=10, size=100, sample=1e-4, negative=5, workers=4)
-	sentences = labeled_train_pos + labeled_train_neg + labeled_test_pos + labeled_test_neg
-	model.build_vocab(sentences)
-
-	# Train the model
-	# This may take a bit to run 
-	for i in range(5):
-		print "Training iteration %d" % (i)
-		random.shuffle(sentences)
-		model.train(sentences)
-
-	# Use the docvecs function to extract the feature vectors for the training and test data
-	# YOUR CODE HERE
-	
-	# Return the four feature vectors
-	return train_pos_vec, train_neg_vec, test_pos_vec, test_neg_vec
-
-
-def obj_map(words_list, label):
-    labeled_list = []
-    for index, text in enumerate(list):
-        LS_obj =  LabeledSentence(words=text, tags = [listname + str(index)])
-        labeled.append(LS_obj)
-    return labeled_list
-
-
-def build_models_NLP(train_pos_vec, train_neg_vec):
-	"""
-	Returns a BernoulliNB and LosticRegression Model that are fit to the training data.
-	"""
-	Y = ["pos"]*len(train_pos_vec) + ["neg"]*len(train_neg_vec)
-
-	# Use sklearn's BernoulliNB and LogisticRegression functions to fit two models to the training data.
-	# For BernoulliNB, use alpha=1.0 and binarize=None
-	# For LogisticRegression, pass no parameters
-	# YOUR CODE HERE
-	
-	nb = BernoulliNB(alpha = 1.0, binarize = None)
-	train = train_pos_vec + train_neg_vec
-	nb_model = nb.fit(train, Y)
-	lr = LogisticRegression()
-	lr_model = lr.fit(train, Y)
-
-	return nb_model, lr_model
-
-
-
-def build_models_DOC(train_pos_vec, train_neg_vec):
-	"""
-	Returns a GaussianNB and LosticRegression Model that are fit to the training data.
-	"""
-	Y = ["pos"]*len(train_pos_vec) + ["neg"]*len(train_neg_vec)
-
-	# Use sklearn's GaussianNB and LogisticRegression functions to fit two models to the training data.
-	# For LogisticRegression, pass no parameters
-	# YOUR CODE HERE
-
-	return nb_model, lr_model
-
-
-
-def evaluate_model(model, test_pos_vec, test_neg_vec, print_confusion=False):
-	"""
-	Prints the confusion matrix and accuracy of the model.
-	"""
-	# Use the predict function and calculate the true/false positives and true/false negative.
-	# YOUR CODE HERE
-	'''
-	pos_temp = model.predict(test_pos_vec)
-	neg_temp = model.predict(test_neg_vec)
-   	pos_predict = Counter(pos_temp)
-	neg_predict = Counter(neg_temp)
-	tp = pos_predict['pos']
-	tn = neg_predict['neg']
-	fn = pos_predict['neg']
-	fp = neg_predict['pos']
-	accuracy = (tp+tn)/float(tp+tn+fn+fp)'''
-
-	tp, fn, fp, tn = 0, 0, 0, 0
-	predict_pos = model.predict(test_pos_vec)
-	predict_neg = model.predict(test_neg_vec)
-
-	for each in predict_pos:
-	  if each == "pos":
-		tp +=1
-	  else:
-		fp +=1
-
-	for each in predict_neg:
-	  if each == "neg":
-		tn +=1
-	  else:
-		fn +=1
-
-	accuracy = (tp+tn)/float(tp+tn+fn+fp)
-
-	if print_confusion:
-		print "predicted:\tpos\tneg"
-		print "actual:"
-		print "pos\t\t%d\t%d" % (tp, fn)
-		print "neg\t\t%d\t%d" % (fp, tn)
-	print "accuracy: %f" % (accuracy)
-
 def filter_part1_part2(words_list, stop_w):
 	word_dict = {}
 	for entry in words_list:	
@@ -238,6 +124,126 @@ def features_vector_mapping(features, txtSet):
 			temp.append(1 if feature in text else 0)
 		f_vector.append(temp)
 	return f_vector
+
+
+def feature_vecs_DOC(train_pos, train_neg, test_pos, test_neg):
+	"""
+	Returns the feature vectors for all text in the train and test datasets.
+	"""
+	# Doc2Vec requires LabeledSentence objects as input.
+	# Turn the datasets from lists of words to lists of LabeledSentence objects.
+	# YOUR CODE HERE
+	
+	labeled_train_pos = generate_LS_map(train_pos, "TRAIN_POS_")
+	labeled_train_neg = generate_LS_map(train_neg, "TRAIN_NEG_")
+	labeled_test_pos = generate_LS_map(test_pos, "TEST_POS_")
+	labeled_test_neg = generate_LS_map(test_neg, "TEST_NEG_")
+	
+	# Initialize model
+	model = Doc2Vec(min_count=1, window=10, size=100, sample=1e-4, negative=5, workers=4)
+	sentences = labeled_train_pos + labeled_train_neg + labeled_test_pos + labeled_test_neg
+	model.build_vocab(sentences)
+	print "finish building model"
+	# Train the model
+	# This may take a bit to run 
+	for i in range(5):
+		print "Training iteration %d" % (i)
+		random.shuffle(sentences)
+		model.train(sentences)
+	print "finish shuffling"
+	# Use the docvecs function to extract the feature vectors for the training and test data
+	# YOUR CODE HERE
+	
+	train_pos_vec = doc_vec_mapping(model, train_pos, "TRAIN_POS_")
+	train_neg_vec = doc_vec_mapping(model, train_neg, "TRAIN_NEG_")
+	test_pos_vec = doc_vec_mapping(model, test_pos, "TEST_POS_")
+	test_neg_vec = doc_vec_mapping(model, test_neg, "TEST_NEG_")	
+	print "finish vecting"
+	# Return the four feature vectors
+	return train_pos_vec, train_neg_vec, test_pos_vec, test_neg_vec
+
+
+def generate_LS_map(words_list, label):
+	labeled_list = []
+	for index, entry in enumerate(words_list):
+		LS_obj =  LabeledSentence(words = entry, tags = [label + str(index)])
+		labeled_list.append(LS_obj)
+	return labeled_list
+
+def doc_vec_mapping(model, dataset, label):
+	result_doc_vec = []
+	for index in range(len(dataset)):
+		result_doc_vec.append(model.docvecs[label + str(index)])
+	return result_doc_vec
+
+
+def build_models_NLP(train_pos_vec, train_neg_vec):
+	"""
+	Returns a BernoulliNB and LosticRegression Model that are fit to the training data.
+	"""
+	Y = ["pos"]*len(train_pos_vec) + ["neg"]*len(train_neg_vec)
+
+	# Use sklearn's BernoulliNB and LogisticRegression functions to fit two models to the training data.
+	# For BernoulliNB, use alpha=1.0 and binarize=None
+	# For LogisticRegression, pass no parameters
+	# YOUR CODE HERE
+	train = train_pos_vec + train_neg_vec
+	nb = BernoulliNB(alpha = 1.0, binarize = None)
+	nb_model = nb.fit(train, Y)
+	lr = LogisticRegression()
+	lr_model = lr.fit(train, Y)
+
+	return nb_model, lr_model
+
+
+
+def build_models_DOC(train_pos_vec, train_neg_vec):
+	"""
+	Returns a GaussianNB and LosticRegression Model that are fit to the training data.
+	"""
+	Y = ["pos"]*len(train_pos_vec) + ["neg"]*len(train_neg_vec)
+
+	# Use sklearn's GaussianNB and LogisticRegression functions to fit two models to the training data.
+	# For LogisticRegression, pass no parameters
+	# YOUR CODE HERE
+	train = train_pos_vec + train_neg_vec
+	gnb = GaussianNB()
+	nb_model = gnb.fit(train, Y)
+	lr = LogisticRegression()
+	lr_model = lr.fit(train, Y)	
+
+	return nb_model, lr_model
+
+
+
+def evaluate_model(model, test_pos_vec, test_neg_vec, print_confusion=False):
+	"""
+	Prints the confusion matrix and accuracy of the model.
+	"""
+	# Use the predict function and calculate the true/false positives and true/false negative.
+	# YOUR CODE HERE
+	
+	pos_temp = model.predict(test_pos_vec)
+	neg_temp = model.predict(test_neg_vec)
+
+   	pos_predict = Counter(pos_temp)
+	neg_predict = Counter(neg_temp)
+	tp = pos_predict['pos']
+	tn = neg_predict['neg']
+	fn = pos_predict['neg']
+	fp = neg_predict['pos']
+	
+
+	accuracy = (tp+tn)/float(tp+tn+fn+fp)
+
+	if print_confusion:
+		print "predicted:\tpos\tneg"
+		print "actual:"
+		print "pos\t\t%d\t%d" % (tp, fn)
+		print "neg\t\t%d\t%d" % (fp, tn)
+	print "accuracy: %f" % (accuracy)
+
+
  
 
 if __name__ == "__main__":
