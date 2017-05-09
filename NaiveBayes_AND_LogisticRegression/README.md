@@ -5,3 +5,7 @@ In this project, sentiment analysis will be performed over IMDB movie reviews an
 ![GitHub Logo](DOC1.PNG)
 
 ![GitHub Logo](DOC2.PNG)
+
+![GitHub Logo](NLP1.PNG)
+
+![GitHub Logo](NLP2.PNG)
